@@ -4,7 +4,8 @@ import { formatDate } from '../../../lib/utils'
 
 async function getArticle(slug: string) {
   try {
-    const res = await fetch(`/api/articles/${slug}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
+    const res = await fetch(`${baseUrl}/api/articles/${slug}`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
