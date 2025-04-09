@@ -6,8 +6,7 @@ import { formatDate } from '../lib/utils'
 // This would be replaced with a database call in a real application
 async function getLatestArticles() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
-    const res = await fetch(`${baseUrl}/api/articles?limit=4`, {
+    const res = await fetch(`/api/articles?limit=4`, {
       method: 'GET',
       cache: 'no-store',
       next: { revalidate: 0 }
@@ -29,8 +28,7 @@ async function getLatestArticles() {
 
 async function getFeaturedArticles() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || ''
-    const res = await fetch(`${baseUrl}/api/articles?featured=true&limit=3`, {
+    const res = await fetch(`/api/articles?featured=true&limit=3`, {
       method: 'GET',
       cache: 'no-store',
       next: { revalidate: 0 }
