@@ -32,7 +32,7 @@ const ShareButtons: React.FC<ShareButtonsProps> = ({ url, title }) => {
 
   return (
     <div className="flex items-center gap-3 my-4">
-      <FacebookShareButton url={url} quote={title}>
+      <FacebookShareButton url={url}>
         <FacebookIcon size={32} round />
       </FacebookShareButton>
 
