@@ -4,7 +4,7 @@ import { formatDate } from '../../../lib/utils'
 
 async function getArticle(slug: string) {
   try {
-    const res = await fetch(`https://newsmedia-xi.vercel.app/api/articles/${slug}`, {
+    const res = await fetch(`/api/articles/${slug}`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',

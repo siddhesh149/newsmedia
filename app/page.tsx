@@ -6,15 +6,10 @@ import { formatDate } from '../lib/utils'
 // This would be replaced with a database call in a real application
 async function getLatestArticles() {
   try {
-    const res = await fetch('https://newsmedia-xi.vercel.app/api/articles?limit=4', {
+    const res = await fetch('/api/articles?limit=4', {
       method: 'GET',
       cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      next: {
-        revalidate: 0
-      }
+      next: { revalidate: 0 }
     });
     
     if (!res.ok) {
@@ -33,15 +28,10 @@ async function getLatestArticles() {
 
 async function getFeaturedArticles() {
   try {
-    const res = await fetch('https://newsmedia-xi.vercel.app/api/articles?featured=true&limit=3', {
+    const res = await fetch('/api/articles?featured=true&limit=3', {
       method: 'GET',
       cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      next: {
-        revalidate: 0
-      }
+      next: { revalidate: 0 }
     });
     
     if (!res.ok) {
@@ -103,7 +93,7 @@ export default async function Home() {
       <section className="bg-white py-12">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8">Latest News</h2>
-          {latestArticles.length > 0 ? (
+          {latestArticles && latestArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {latestArticles.map((article: any) => (
                 <div key={article.id} className="flex flex-col p-4 border rounded-lg hover:shadow-md transition-all">
@@ -117,24 +107,29 @@ export default async function Home() {
                       />
                     </div>
                     <div className="flex-1">
-                      <span className="text-blue-600 text-sm font-semibold">{article.category}</span>
-                      <h3 className="text-lg font-bold mt-1 line-clamp-2">{article.title}</h3>
+                      <Link
+                        href={`/category/${article.category}`}
+                        className="text-blue-600 text-sm font-semibold hover:text-blue-800"
+                      >
+                        {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                      </Link>
+                      <Link href={`/article/${article.slug}`}>
+                        <h3 className="text-lg font-bold mt-1 hover:text-blue-600">{article.title}</h3>
+                      </Link>
                       <p className="text-gray-600 text-sm mt-1 line-clamp-2">{article.excerpt}</p>
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t pt-4">
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+                    <div className="flex items-center text-sm text-gray-500">
                       <span>By {article.author}</span>
-                      <span>{formatDate(article.publishedAt.toString())}</span>
+                      <span className="mx-2">•</span>
+                      <span>{formatDate(article.publishedAt)}</span>
                     </div>
                     <Link 
                       href={`/article/${article.slug}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      Read full article
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      Read more →
                     </Link>
                   </div>
                 </div>
@@ -153,17 +148,17 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Featured News Grid */}
+      {/* Featured Stories Section */}
       <section className="container mx-auto px-4 py-12">
         <h2 className="text-3xl font-bold mb-8">Featured Stories</h2>
-        {featuredArticles.length > 0 ? (
+        {featuredArticles && featuredArticles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredArticles.map((article: any) => (
               <div 
                 key={article.id} 
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="relative h-40">
+                <div className="relative h-48">
                   <Image
                     src={article.image}
                     alt={article.title}
@@ -172,22 +167,27 @@ export default async function Home() {
                   />
                 </div>
                 <div className="p-6">
-                  <span className="text-blue-600 text-sm font-semibold">{article.category}</span>
-                  <h3 className="text-xl font-bold mt-2 line-clamp-2">{article.title}</h3>
+                  <Link
+                    href={`/category/${article.category}`}
+                    className="text-blue-600 text-sm font-semibold hover:text-blue-800"
+                  >
+                    {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
+                  </Link>
+                  <Link href={`/article/${article.slug}`}>
+                    <h3 className="text-xl font-bold mt-2 hover:text-blue-600">{article.title}</h3>
+                  </Link>
                   <p className="text-gray-600 mt-2 text-sm line-clamp-3">{article.excerpt}</p>
                   <div className="mt-4 flex items-center justify-between border-t pt-4">
-                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+                    <div className="flex items-center text-sm text-gray-500">
                       <span>By {article.author}</span>
-                      <span>{formatDate(article.publishedAt.toString())}</span>
+                      <span className="mx-2">•</span>
+                      <span>{formatDate(article.publishedAt)}</span>
                     </div>
                     <Link 
                       href={`/article/${article.slug}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      Read full article
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      Read more →
                     </Link>
                   </div>
                 </div>
