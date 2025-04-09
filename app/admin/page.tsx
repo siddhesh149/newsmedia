@@ -16,6 +16,13 @@ interface Article {
   featured: boolean
 }
 
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  return process.env.NEXT_PUBLIC_API_URL || ''
+}
+
 export default function AdminPage() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -45,7 +52,8 @@ export default function AdminPage() {
 
   const fetchArticles = async () => {
     try {
-      const res = await fetch('/api/articles')
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/articles`)
       const data = await res.json()
       setArticles(data.articles || [])
     } catch (error) {
@@ -58,7 +66,8 @@ export default function AdminPage() {
     e.preventDefault()
     
     try {
-      const res = await fetch('/api/admin/login', {
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +100,8 @@ export default function AdminPage() {
     setStatus('Adding article...')
 
     try {
-      const res = await fetch('/api/articles', {
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/articles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +137,8 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this article?')) return
 
     try {
-      const res = await fetch(`/api/articles/${slug}`, {
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/articles/${slug}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminAuthToken')}`
