@@ -1,16 +1,28 @@
 # NewsMedia
 
-A modern news website built with Next.js and Tailwind CSS.
+A modern news website built with Next.js, featuring dynamic content management, responsive design, and real-time updates.
 
 ## Features
 
-- Responsive design
-- Modern UI with Tailwind CSS
-- Breaking news section
-- Featured news grid
-- Newsletter subscription
+- Dynamic article management
 - Category-based navigation
-- Mobile-friendly layout
+- Search functionality
+- Responsive design
+- Social sharing
+- Admin dashboard
+
+## Tech Stack
+
+- Next.js 14
+- React
+- TypeScript
+- Tailwind CSS
+- Prisma
+- CockroachDB
+
+## Author
+
+- [Siddhesh](https://github.com/siddhesh149)
 
 ## Getting Started
 
@@ -56,14 +68,6 @@ To make your website discoverable on Google:
   - `layout.tsx` - Root layout component
   - `page.tsx` - Homepage component
   - `globals.css` - Global styles and Tailwind imports
-
-## Technologies Used
-
-- Next.js 14
-- React 18
-- Tailwind CSS
-- Hero Icons
-- TypeScript
 
 ## Development
 
