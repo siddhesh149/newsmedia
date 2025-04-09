@@ -11,10 +11,13 @@ async function getLatestArticles() {
     });
     
     if (!res.ok) {
+      console.log('Failed to fetch latest articles:', await res.text());
       return { articles: [] };
     }
     
-    return res.json();
+    const data = await res.json();
+    console.log('Latest articles:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching latest articles:', error);
     return { articles: [] };
@@ -28,10 +31,13 @@ async function getFeaturedArticles() {
     });
     
     if (!res.ok) {
+      console.log('Failed to fetch featured articles:', await res.text());
       return { articles: [] };
     }
     
-    return res.json();
+    const data = await res.json();
+    console.log('Featured articles:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching featured articles:', error);
     return { articles: [] };
@@ -86,7 +92,7 @@ export default async function Home() {
           {latestArticles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {latestArticles.map((article: any) => (
-                <div key={article._id} className="flex flex-col p-4 border rounded-lg hover:shadow-md transition-all">
+                <div key={article.id} className="flex flex-col p-4 border rounded-lg hover:shadow-md transition-all">
                   <div className="flex gap-4">
                     <div className="relative w-32 h-24 flex-shrink-0">
                       <Image
@@ -140,7 +146,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredArticles.map((article: any) => (
               <div 
-                key={article._id} 
+                key={article.id} 
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="relative h-40">
