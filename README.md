@@ -1,15 +1,15 @@
 # NewsMedia
 
-A modern news website built with Next.js, featuring dynamic content management, responsive design, and real-time updates.
+A modern news media platform built with Next.js 14, React, TypeScript, Tailwind CSS, Prisma, and CockroachDB.
 
 ## Features
 
 - Dynamic article management
 - Category-based navigation
 - Search functionality
-- Responsive design
 - Social sharing
 - Admin dashboard
+- Responsive design
 
 ## Tech Stack
 
@@ -20,39 +20,30 @@ A modern news website built with Next.js, featuring dynamic content management, 
 - Prisma
 - CockroachDB
 
-## Author
-
-- [Siddhesh](https://github.com/siddhesh149)
-
 ## Getting Started
 
-1. Install dependencies:
-```bash
-npm install
-```
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables:
+   - `DATABASE_URL`: Your CockroachDB connection string
+   - `NEXT_PUBLIC_API_URL`: Your application URL
+   - `ADMIN_SECRET`: Secret for admin routes
 
-2. Run the development server:
-```bash
-npm run dev
-```
-
-3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Run the development server: `npm run dev`
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Deployment
 
-### Deploy to Vercel (Recommended)
+This project is deployed on Vercel. The build process includes:
+- Prisma client generation
+- Database schema push
+- Next.js build
 
-1. Create a Vercel account at [vercel.com](https://vercel.com)
-2. Install Vercel CLI:
-```bash
-npm install -g vercel
-```
-3. Deploy your site:
-```bash
-vercel
-```
+## Author
 
-### SEO Optimization
+- [Siddhesh Ghargane](https://github.com/siddhesh149)
+
+## SEO Optimization
 
 To make your website discoverable on Google:
 
