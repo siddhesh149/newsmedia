@@ -108,7 +108,7 @@ export default async function Home() {
                       <span>{formatDate(article.publishedAt.toString())}</span>
                     </div>
                     <Link 
-                      href={`/articles/${article.slug}`}
+                      href={`/article/${article.slug}`}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
                     >
                       Read full article
@@ -126,7 +126,7 @@ export default async function Home() {
             </div>
           )}
           <div className="text-center mt-8">
-            <Link href="/articles" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link href="/article" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
               View All News
             </Link>
           </div>
@@ -161,7 +161,7 @@ export default async function Home() {
                       <span>{formatDate(article.publishedAt.toString())}</span>
                     </div>
                     <Link 
-                      href={`/articles/${article.slug}`}
+                      href={`/article/${article.slug}`}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
                     >
                       Read full article
