@@ -6,10 +6,14 @@ import { formatDate } from '../lib/utils'
 // This would be replaced with a database call in a real application
 async function getLatestArticles() {
   try {
-    const res = await fetch('/api/articles?limit=4', {
+    const res = await fetch('https://newsmedia-xi.vercel.app/api/articles?limit=4', {
+      method: 'GET',
       cache: 'no-store',
       headers: {
-        'Cache-Control': 'no-cache'
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 0
       }
     });
     
@@ -29,10 +33,14 @@ async function getLatestArticles() {
 
 async function getFeaturedArticles() {
   try {
-    const res = await fetch('/api/articles?featured=true&limit=3', {
+    const res = await fetch('https://newsmedia-xi.vercel.app/api/articles?featured=true&limit=3', {
+      method: 'GET',
       cache: 'no-store',
       headers: {
-        'Cache-Control': 'no-cache'
+        'Content-Type': 'application/json',
+      },
+      next: {
+        revalidate: 0
       }
     });
     

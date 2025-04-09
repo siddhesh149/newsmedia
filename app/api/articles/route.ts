@@ -3,11 +3,14 @@ import prisma from '../../../lib/db';
 
 // GET all articles with optional filtering
 export async function GET(request: NextRequest) {
+  console.log('GET /api/articles - Request received');
   const { searchParams } = new URL(request.url);
   const featured = searchParams.get('featured') === 'true';
   const limit = Number(searchParams.get('limit')) || undefined;
   const category = searchParams.get('category');
   const search = searchParams.get('q');
+
+  console.log('Query params:', { featured, limit, category, search });
 
   try {
     const articles = await prisma.article.findMany({
@@ -46,11 +49,39 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ articles });
+    console.log(`Found ${articles.length} articles`);
+
+    return new NextResponse(JSON.stringify({ articles }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   } catch (error) {
     console.error('Request error:', error);
-    return NextResponse.json({ error: 'Error fetching articles' }, { status: 500 });
+    return new NextResponse(JSON.stringify({ error: 'Error fetching articles' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
+}
+
+// Handle OPTIONS requests for CORS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 // POST a new article
