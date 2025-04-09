@@ -158,7 +158,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                 <div className="p-4">
                   <h3 className="font-semibold mb-2 line-clamp-2">{related.title}</h3>
                   <p className={`text-sm ${(new Date().getTime() - new Date(related.publishedAt).getTime()) / (1000 * 60 * 60) < 48 ? "text-green-600 font-medium" : "text-gray-600"}`}>
-                    {formatDate(related.publishedAt)}
+                    {formatDate(related.publishedAt.toString())}
                   </p>
                 </div>
               </Link>
@@ -188,9 +188,9 @@ export default async function ArticlePage({ params }: { params: { slug: string }
                 </div>
                 <div className="flex-1">
                   <span className="text-blue-600 text-sm">{recommended.category}</span>
-                  <h3 className="font-semibold line-clamp-2 mt-1">{recommended.title}</h3>
-                  <p className={`text-sm mt-1 ${(new Date().getTime() - new Date(recommended.publishedAt).getTime()) / (1000 * 60 * 60) < 48 ? "text-green-600 font-medium" : "text-gray-600"}`}>
-                    {formatDate(recommended.publishedAt)}
+                  <h3 className="font-semibold mb-2 line-clamp-2">{recommended.title}</h3>
+                  <p className={`text-sm ${(new Date().getTime() - new Date(recommended.publishedAt).getTime()) / (1000 * 60 * 60) < 48 ? "text-green-600 font-medium" : "text-gray-600"}`}>
+                    {formatDate(recommended.publishedAt.toString())}
                   </p>
                 </div>
               </Link>
