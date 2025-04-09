@@ -57,7 +57,7 @@ export default async function CategoryPage({ params }: { params: { category: str
                   <p className="text-gray-600 mt-2 line-clamp-3">{article.excerpt}</p>
                   <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
                     <span>By {article.author}</span>
-                    <span>{formatDate(article.publishedAt)}</span>
+                    <span>{formatDate(article.publishedAt.toString())}</span>
                   </div>
                 </div>
               </Link>

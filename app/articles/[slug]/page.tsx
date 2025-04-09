@@ -94,7 +94,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <div className="flex items-center text-gray-600 text-sm">
               <span>{article.author}</span>
               <span className="mx-2">•</span>
-              <time>{formatDate(article.publishedAt)}</time>
+              <time>{formatDate(article.publishedAt.toString())}</time>
             </div>
           </div>
         </div>

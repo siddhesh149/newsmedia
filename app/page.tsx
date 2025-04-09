@@ -103,9 +103,10 @@ export default async function Home() {
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t pt-4">
-                    <span className={`text-sm ${(new Date().getTime() - new Date(article.publishedAt).getTime()) / (1000 * 60 * 60) < 48 ? "text-green-600 font-medium" : "text-gray-500"}`}>
-                      {formatDate(article.publishedAt)}
-                    </span>
+                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+                      <span>By {article.author}</span>
+                      <span>{formatDate(article.publishedAt.toString())}</span>
+                    </div>
                     <Link 
                       href={`/articles/${article.slug}`}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
@@ -155,9 +156,10 @@ export default async function Home() {
                   <h3 className="text-xl font-bold mt-2 line-clamp-2">{article.title}</h3>
                   <p className="text-gray-600 mt-2 text-sm line-clamp-3">{article.excerpt}</p>
                   <div className="mt-4 flex items-center justify-between border-t pt-4">
-                    <span className={`text-sm ${(new Date().getTime() - new Date(article.publishedAt).getTime()) / (1000 * 60 * 60) < 48 ? "text-green-600 font-medium" : "text-gray-500"}`}>
-                      {formatDate(article.publishedAt)}
-                    </span>
+                    <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
+                      <span>By {article.author}</span>
+                      <span>{formatDate(article.publishedAt.toString())}</span>
+                    </div>
                     <Link 
                       href={`/articles/${article.slug}`}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
