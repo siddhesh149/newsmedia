@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,7 +17,7 @@ interface Article {
   publishedAt: string
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const [articles, setArticles] = useState<Article[]>([])
@@ -99,22 +99,19 @@ export default function SearchPage() {
                       {formatDate(article.publishedAt)}
                     </span>
                   </div>
-                  <h2 className="text-xl font-bold mb-2 line-clamp-2">
-                    <Link href={`/articles/${article.slug}`} className="hover:text-blue-600">
+                  <Link href={`/article/${article.slug}`}>
+                    <h2 className="text-xl font-bold mb-2 hover:text-blue-600">
                       {article.title}
-                    </Link>
-                  </h2>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{article.excerpt}</p>
+                    </h2>
+                  </Link>
+                  <p className="text-gray-600 mb-4">{article.excerpt}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-500 text-sm">{article.author}</span>
+                    <span className="text-gray-500 text-sm">By {article.author}</span>
                     <Link
-                      href={`/articles/${article.slug}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center gap-1 group"
+                      href={`/article/${article.slug}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      Read more
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      Read more →
                     </Link>
                   </div>
                 </div>
@@ -124,5 +121,19 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl font-bold mb-8">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   )
 } 
