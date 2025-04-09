@@ -2,375 +2,247 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Article {
   id: string
   title: string
   slug: string
-  content: string
   excerpt: string
+  content: string
   image: string
   category: string
   author: string
-  tags: string
+  publishedAt: string
   featured: boolean
-}
-
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return window.location.origin
-  }
-  return process.env.NEXT_PUBLIC_API_URL || ''
+  tags: string
 }
 
 export default function AdminPage() {
-  const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [password, setPassword] = useState('')
   const [articles, setArticles] = useState<Article[]>([])
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    excerpt: '',
-    image: '',
-    category: '',
-    author: '',
-    tags: '',
-    featured: false
-  })
-  const [status, setStatus] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [adminSecret, setAdminSecret] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
-    // Check if there's a stored auth token
-    const authToken = localStorage.getItem('adminAuthToken')
-    if (authToken) {
-      setIsAuthenticated(true)
-      fetchArticles()
+    const secret = localStorage.getItem('adminSecret')
+    if (secret) {
+      verifyAuth(secret)
+    } else {
+      setLoading(false)
     }
   }, [])
 
-  const fetchArticles = async () => {
+  const verifyAuth = async (secret: string) => {
     try {
-      const baseUrl = getBaseUrl()
-      const res = await fetch(`${baseUrl}/api/articles`)
-      const data = await res.json()
-      setArticles(data.articles || [])
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ secret }),
+      })
+
+      if (res.ok) {
+        setIsAuthenticated(true)
+        setAdminSecret(secret)
+        fetchArticles(secret)
+      } else {
+        localStorage.removeItem('adminSecret')
+        setLoading(false)
+      }
     } catch (error) {
-      console.error('Error fetching articles:', error)
-      setArticles([])
+      console.error('Auth error:', error)
+      setLoading(false)
     }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    try {
-      const baseUrl = getBaseUrl()
-      const res = await fetch(`${baseUrl}/api/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      })
+    setLoading(true)
+    await verifyAuth(adminSecret)
+  }
 
-      if (res.ok) {
-        setIsAuthenticated(true)
-        localStorage.setItem('adminAuthToken', password)
-        fetchArticles()
-      } else {
-        setStatus('Invalid password')
-      }
-    } catch (error) {
-      setStatus('Login failed')
+  const fetchArticles = async (secret: string) => {
+    try {
+      const res = await fetch('/api/articles', {
+        headers: {
+          'Authorization': `Bearer ${secret}`
+        }
+      })
+      if (!res.ok) throw new Error('Failed to fetch articles')
+      const data = await res.json()
+      setArticles(data.articles)
+      setError('')
+    } catch (err) {
+      setError('Failed to load articles')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStatus('Adding article...')
-
-    try {
-      const baseUrl = getBaseUrl()
-      const res = await fetch(`${baseUrl}/api/articles`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminAuthToken')}`
-        },
-        body: JSON.stringify(formData)
-      })
-
-      if (!res.ok) {
-        throw new Error('Failed to add article')
-      }
-
-      setStatus('Article added successfully!')
-      setFormData({
-        title: '',
-        slug: '',
-        content: '',
-        excerpt: '',
-        image: '',
-        category: '',
-        author: '',
-        tags: '',
-        featured: false
-      })
-      fetchArticles()
-      router.refresh()
-    } catch (error) {
-      setStatus('Error adding article')
-    }
-  }
-
-  const handleDelete = async (slug: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this article?')) return
 
     try {
-      const baseUrl = getBaseUrl()
-      const res = await fetch(`${baseUrl}/api/articles/${slug}`, {
+      const res = await fetch(`/api/articles/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminAuthToken')}`
+          'Authorization': `Bearer ${adminSecret}`
         }
       })
 
-      if (!res.ok) {
-        throw new Error('Failed to delete article')
-      }
-
-      fetchArticles()
-      setStatus('Article deleted successfully!')
-    } catch (error) {
-      setStatus('Error deleting article')
+      if (!res.ok) throw new Error('Failed to delete article')
+      
+      // Remove the deleted article from the state
+      setArticles(articles.filter(article => article.id !== id))
+    } catch (err) {
+      console.error('Error deleting article:', err)
+      alert('Failed to delete article')
     }
+  }
+
+  const handleEdit = (slug: string) => {
+    router.push(`/admin/edit/${slug}`)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Loading...</h2>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
-          <form onSubmit={handleLogin} className="space-y-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Admin Login
+            </h2>
+          </div>
+          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
             <div>
-              <label className="block mb-1">Password</label>
+              <label htmlFor="adminSecret" className="sr-only">
+                Admin Secret
+              </label>
               <input
+                id="adminSecret"
+                name="adminSecret"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 border rounded"
                 required
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Enter admin secret"
+                value={adminSecret}
+                onChange={(e) => setAdminSecret(e.target.value)}
               />
             </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-            >
-              Login
-            </button>
-          </form>
-          {status && (
-            <div className="mt-4 p-4 bg-red-100 text-red-700 rounded">
-              {status}
+            <div>
+              <button
+                type="submit"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Login
+              </button>
             </div>
-          )}
+          </form>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Article Management</h1>
-          <button
-            onClick={() => {
-              localStorage.removeItem('adminAuthToken')
-              setIsAuthenticated(false)
-            }}
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Add Article Form */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold mb-4">Add New Article</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-1">Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">Slug</label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={formData.slug}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">Category</label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="">Select category</option>
-                  <option value="world">World</option>
-                  <option value="politics">Politics</option>
-                  <option value="business">Business</option>
-                  <option value="technology">Technology</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block mb-1">Author</label>
-                <input
-                  type="text"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">Image URL</label>
-                <input
-                  type="url"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">Tags (comma-separated)</label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block mb-1">Excerpt</label>
-              <textarea
-                name="excerpt"
-                value={formData.excerpt}
-                onChange={handleChange}
-                className="w-full p-2 border rounded h-20"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1">Content</label>
-              <textarea
-                name="content"
-                value={formData.content}
-                onChange={handleChange}
-                className="w-full p-2 border rounded h-40"
-                required
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="featured"
-                checked={formData.featured}
-                onChange={handleChange}
-                className="mr-2"
-              />
-              <label>Featured Article</label>
-            </div>
-
+          <h2 className="text-3xl font-bold text-gray-900">Article Management</h2>
+          <div className="flex space-x-4">
             <button
-              type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
+              onClick={() => router.push('/admin/new')}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Add Article
+              Create New Article
             </button>
-          </form>
-
-          {status && (
-            <div className={`mt-4 p-4 rounded ${
-              status.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {status}
-            </div>
-          )}
+            <button
+              onClick={() => {
+                localStorage.removeItem('adminSecret')
+                setIsAuthenticated(false)
+                setAdminSecret('')
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
-        {/* Articles List */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">Manage Articles</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="p-4 text-left">Title</th>
-                  <th className="p-4 text-left">Category</th>
-                  <th className="p-4 text-left">Author</th>
-                  <th className="p-4 text-left">Featured</th>
-                  <th className="p-4 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((article) => (
-                  <tr key={article.id} className="border-t">
-                    <td className="p-4">{article.title}</td>
-                    <td className="p-4">{article.category}</td>
-                    <td className="p-4">{article.author}</td>
-                    <td className="p-4">{article.featured ? 'Yes' : 'No'}</td>
-                    <td className="p-4">
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <ul className="divide-y divide-gray-200">
+            {articles.map((article) => (
+              <li key={article.id}>
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative h-16 w-16 flex-shrink-0">
+                        <Image
+                          src={article.image}
+                          alt={article.title}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-blue-600 truncate">
+                          {article.title}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {article.category} • {new Date(article.publishedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
                       <button
-                        onClick={() => handleDelete(article.slug)}
-                        className="text-red-600 hover:text-red-800"
+                        onClick={() => handleEdit(article.slug)}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(article.id)}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         Delete
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>
