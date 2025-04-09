@@ -5,28 +5,54 @@ import { revalidatePath } from 'next/cache';
 
 // GET a single article by slug
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
   try {
     const article = await prisma.article.findUnique({
       where: {
-        slug: params.slug
-      }
+        slug: params.slug,
+      },
     });
 
     if (!article) {
-      return notFound();
+      return new NextResponse(JSON.stringify({ error: 'Article not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
-    return NextResponse.json(article);
+    return new NextResponse(JSON.stringify(article), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   } catch (error) {
     console.error('Error fetching article:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch article' },
-      { status: 500 }
-    );
+    return new NextResponse(JSON.stringify({ error: 'Error fetching article' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  });
 }
 
 // UPDATE an article
