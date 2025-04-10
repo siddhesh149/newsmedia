@@ -147,11 +147,12 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
     try {
       const adminSecret = localStorage.getItem('adminSecret')
       if (!adminSecret) {
+        setStatus('Please log in again')
         router.push('/admin')
         return
       }
 
-      const res = await fetch(`/api/articles/${params.slug}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles/${params.slug}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -160,19 +161,22 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
         body: JSON.stringify(formData)
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
         if (res.status === 401) {
+          setStatus('Session expired. Please log in again')
           router.push('/admin')
           return
         }
-        throw new Error('Failed to update article')
+        throw new Error(data.error || 'Failed to update article')
       }
 
       setStatus('Article updated successfully!')
       router.push('/admin')
     } catch (error) {
       console.error('Error updating article:', error)
-      setStatus('Failed to update article')
+      setStatus(error instanceof Error ? error.message : 'Failed to update article')
     }
   }
 

@@ -89,6 +89,13 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this article?')) return
 
     try {
+      const adminSecret = localStorage.getItem('adminSecret')
+      if (!adminSecret) {
+        alert('Please log in again')
+        setIsAuthenticated(false)
+        return
+      }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles/${slug}`, {
         method: 'DELETE',
         headers: {
@@ -98,9 +105,8 @@ export default function AdminPage() {
         cache: 'no-store'
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
+        const data = await res.json()
         throw new Error(data.error || 'Failed to delete article')
       }
       
@@ -110,6 +116,11 @@ export default function AdminPage() {
       router.refresh()
     } catch (err) {
       console.error('Error deleting article:', err)
+      if (err instanceof Error && err.message.includes('Invalid authorization token')) {
+        alert('Your session has expired. Please log in again.')
+        setIsAuthenticated(false)
+        return
+      }
       alert(err instanceof Error ? err.message : 'Failed to delete article')
     }
   }

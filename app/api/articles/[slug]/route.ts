@@ -83,8 +83,11 @@ export async function PUT(
       );
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!token || token !== process.env.ADMIN_SECRET) {
+    const token = authHeader.replace('Bearer ', '').trim();
+    const adminSecret = process.env.ADMIN_SECRET?.trim();
+    
+    if (!token || !adminSecret || token !== adminSecret) {
+      console.error('Token mismatch:', { token, adminSecret });
       return NextResponse.json(
         { error: 'Invalid or expired token' },
         { 
@@ -182,10 +185,12 @@ export async function DELETE(
       );
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.replace('Bearer ', '').trim();
+    const adminSecret = process.env.ADMIN_SECRET?.trim();
     
     // Verify the token matches exactly
-    if (!token || token.trim() !== process.env.ADMIN_SECRET?.trim()) {
+    if (!token || !adminSecret || token !== adminSecret) {
+      console.error('Token mismatch:', { token, adminSecret });
       return NextResponse.json(
         { error: 'Invalid authorization token' },
         { 
