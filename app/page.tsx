@@ -6,7 +6,8 @@ import { formatDate } from '../lib/utils'
 // This would be replaced with a database call in a real application
 async function getLatestArticles() {
   try {
-    const res = await fetch(`/api/articles?limit=4`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const res = await fetch(`${apiUrl}/api/articles?limit=4`, {
       method: 'GET',
       cache: 'no-store',
       next: { revalidate: 0 }
@@ -113,21 +114,21 @@ export default async function Home() {
                       >
                         {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
                       </Link>
-                      <Link href={`/article/${article.slug}`}>
+                      <Link href={`/articles/${article.slug}`}>
                         <h3 className="text-lg font-bold mt-1 hover:text-blue-600">{article.title}</h3>
                       </Link>
                       <p className="text-gray-600 text-sm mt-1 line-clamp-2">{article.excerpt}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t pt-4">
+                  <div className="mt-4">
                     <div className="flex items-center text-sm text-gray-500">
                       <span>By {article.author}</span>
                       <span className="mx-2">•</span>
                       <span>{formatDate(article.publishedAt)}</span>
                     </div>
                     <Link 
-                      href={`/article/${article.slug}`}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      href={`/articles/${article.slug}`}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 inline-block"
                     >
                       Read more →
                     </Link>
@@ -173,7 +174,7 @@ export default async function Home() {
                   >
                     {article.category.charAt(0).toUpperCase() + article.category.slice(1)}
                   </Link>
-                  <Link href={`/article/${article.slug}`}>
+                  <Link href={`/articles/${article.slug}`}>
                     <h3 className="text-xl font-bold mt-2 hover:text-blue-600">{article.title}</h3>
                   </Link>
                   <p className="text-gray-600 mt-2 text-sm line-clamp-3">{article.excerpt}</p>
@@ -184,10 +185,10 @@ export default async function Home() {
                       <span>{formatDate(article.publishedAt)}</span>
                     </div>
                     <Link 
-                      href={`/article/${article.slug}`}
+                      href={`/articles/${article.slug}`}
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      Read more →
+                      Read full article →
                     </Link>
                   </div>
                 </div>
