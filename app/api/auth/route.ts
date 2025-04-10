@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (secret !== adminSecret) {
+    // Trim both strings to handle any whitespace issues
+    if (secret?.trim() !== adminSecret.trim()) {
       return new NextResponse(
         JSON.stringify({ error: 'Invalid admin secret' }),
         {
