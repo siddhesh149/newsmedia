@@ -52,7 +52,13 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
           }
         })
 
-        if (!res.ok) throw new Error('Failed to fetch article')
+        if (!res.ok) {
+          if (res.status === 401) {
+            router.push('/admin')
+            return
+          }
+          throw new Error('Failed to fetch article')
+        }
         
         const article = await res.json()
         setFormData(article)
@@ -154,7 +160,13 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
         body: JSON.stringify(formData)
       })
 
-      if (!res.ok) throw new Error('Failed to update article')
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push('/admin')
+          return
+        }
+        throw new Error('Failed to update article')
+      }
 
       setStatus('Article updated successfully!')
       router.push('/admin')

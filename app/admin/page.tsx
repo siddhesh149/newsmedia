@@ -37,7 +37,7 @@ export default function AdminPage() {
 
   const verifyAuth = async (secret: string) => {
     try {
-      const res = await fetch('/api/auth', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,6 +48,7 @@ export default function AdminPage() {
       if (res.ok) {
         setIsAuthenticated(true)
         setAdminSecret(secret)
+        localStorage.setItem('adminSecret', secret)
         fetchArticles(secret)
       } else {
         localStorage.removeItem('adminSecret')
@@ -67,7 +68,7 @@ export default function AdminPage() {
 
   const fetchArticles = async (secret: string) => {
     try {
-      const res = await fetch('/api/articles', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles`, {
         headers: {
           'Authorization': `Bearer ${secret}`
         }
@@ -84,28 +85,41 @@ export default function AdminPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (slug: string) => {
     if (!confirm('Are you sure you want to delete this article?')) return
 
     try {
-      const res = await fetch(`/api/articles/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles/${slug}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${adminSecret}`
-        }
+          'Authorization': `Bearer ${adminSecret}`,
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store'
       })
 
-      if (!res.ok) throw new Error('Failed to delete article')
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete article')
+      }
       
       // Remove the deleted article from the state
-      setArticles(articles.filter(article => article.id !== id))
+      setArticles(articles.filter(article => article.slug !== slug))
+      // Refresh the page to ensure we have the latest data
+      router.refresh()
     } catch (err) {
       console.error('Error deleting article:', err)
-      alert('Failed to delete article')
+      alert(err instanceof Error ? err.message : 'Failed to delete article')
     }
   }
 
   const handleEdit = (slug: string) => {
+    if (!adminSecret) {
+      alert('Please log in again')
+      setIsAuthenticated(false)
+      return
+    }
     router.push(`/admin/edit/${slug}`)
   }
 
@@ -232,7 +246,7 @@ export default function AdminPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(article.id)}
+                        onClick={() => handleDelete(article.slug)}
                         className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         Delete

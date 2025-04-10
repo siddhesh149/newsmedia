@@ -20,6 +20,9 @@ export async function GET(
         status: 404,
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
       });
     }
@@ -39,6 +42,9 @@ export async function GET(
       status: 500,
       headers: {
         'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
   }
@@ -49,7 +55,7 @@ export async function OPTIONS() {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
@@ -61,7 +67,59 @@ export async function PUT(
   { params }: { params: { slug: string } }
 ) {
   try {
+    // Check authorization
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'No authorization header' },
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token || token !== process.env.ADMIN_SECRET) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { 
+          status: 401,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
     const body = await request.json();
+    
+    // First check if the article exists
+    const existingArticle = await prisma.article.findUnique({
+      where: {
+        slug: params.slug
+      }
+    });
+
+    if (!existingArticle) {
+      return NextResponse.json(
+        { error: 'Article not found' },
+        { 
+          status: 404,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
     
     const article = await prisma.article.update({
       where: {
@@ -69,25 +127,34 @@ export async function PUT(
       },
       data: body
     });
-    
-    if (!article) {
-      return NextResponse.json(
-        { error: 'Article not found' },
-        { status: 404 }
-      );
-    }
 
     // Revalidate the pages
     revalidatePath('/');
     revalidatePath('/articles');
     revalidatePath(`/articles/${article.slug}`);
     
-    return NextResponse.json(article);
+    return NextResponse.json(
+      { message: 'Article updated successfully', article },
+      {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
+    );
   } catch (error) {
     console.error('Error updating article:', error);
     return NextResponse.json(
-      { error: 'Failed to update article' },
-      { status: 500 }
+      { error: 'Failed to update article. Please try again.' },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'PUT, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 }
@@ -98,24 +165,115 @@ export async function DELETE(
   { params }: { params: { slug: string } }
 ) {
   try {
-    // Delete the article by slug
-    const article = await prisma.article.delete({
+    // Check authorization
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    
+    // Verify the token matches exactly
+    if (!token || token.trim() !== process.env.ADMIN_SECRET?.trim()) {
+      return NextResponse.json(
+        { error: 'Invalid authorization token' },
+        { 
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
+
+    // First check if the article exists
+    const existingArticle = await prisma.article.findUnique({
       where: {
         slug: params.slug,
       },
     });
 
-    // Revalidate the homepage and article pages
-    revalidatePath('/');
-    revalidatePath('/articles');
-    revalidatePath(`/articles/${article.slug}`);
+    if (!existingArticle) {
+      return NextResponse.json(
+        { error: 'Article not found' },
+        { 
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
 
-    return NextResponse.json(article);
+    try {
+      // Delete the article
+      const article = await prisma.article.delete({
+        where: {
+          slug: params.slug,
+        },
+      });
+
+      // Revalidate the pages
+      revalidatePath('/');
+      revalidatePath('/articles');
+      revalidatePath(`/articles/${params.slug}`);
+
+      return NextResponse.json(
+        { message: 'Article deleted successfully', article },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    } catch (deleteError) {
+      console.error('Error deleting article from database:', deleteError);
+      return NextResponse.json(
+        { error: 'Database error while deleting article' },
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          }
+        }
+      );
+    }
   } catch (error) {
-    console.error('Error deleting article:', error);
+    console.error('Error in DELETE route:', error);
     return NextResponse.json(
-      { error: 'Error deleting article' },
-      { status: 500 }
+      { error: 'Internal server error' },
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      }
     );
   }
 } 
