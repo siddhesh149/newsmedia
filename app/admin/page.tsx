@@ -39,7 +39,10 @@ export default function AdminPage() {
   const verifyAuth = async (secret: string) => {
     try {
       console.log('Attempting authentication...')
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin
+      console.log('Using API URL:', apiUrl)
+      
+      const res = await fetch(`${apiUrl}/api/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +84,10 @@ export default function AdminPage() {
   const fetchArticles = async (token: string) => {
     try {
       console.log('Fetching articles...')
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin
+      console.log('Using API URL:', apiUrl)
+      
+      const res = await fetch(`${apiUrl}/api/articles`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -120,7 +126,10 @@ export default function AdminPage() {
       }
 
       console.log('Deleting article:', slug)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles/${slug}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || window.location.origin
+      console.log('Using API URL:', apiUrl)
+      
+      const res = await fetch(`${apiUrl}/api/articles/${slug}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
