@@ -28,6 +28,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     const secret = localStorage.getItem('adminSecret')
+    console.log('Initial load - Admin secret exists:', !!secret)
     if (secret) {
       verifyAuth(secret)
     } else {
@@ -37,26 +38,37 @@ export default function AdminPage() {
 
   const verifyAuth = async (secret: string) => {
     try {
+      console.log('Attempting authentication...')
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ secret }),
+        cache: 'no-store'
       })
 
-      if (res.ok) {
+      console.log('Auth response status:', res.status)
+      const data = await res.json()
+      console.log('Auth response:', data)
+
+      if (res.ok && data.success) {
+        console.log('Authentication successful')
         setIsAuthenticated(true)
-        setAdminSecret(secret)
-        localStorage.setItem('adminSecret', secret)
-        fetchArticles(secret)
+        setAdminSecret(data.token)
+        localStorage.setItem('adminSecret', data.token)
+        await fetchArticles(data.token)
       } else {
+        console.error('Authentication failed:', data.error)
         localStorage.removeItem('adminSecret')
         setLoading(false)
+        alert(data.error || 'Authentication failed')
       }
     } catch (error) {
       console.error('Auth error:', error)
       setLoading(false)
+      localStorage.removeItem('adminSecret')
+      alert('Authentication failed. Please try again.')
     }
   }
 
@@ -66,20 +78,30 @@ export default function AdminPage() {
     await verifyAuth(adminSecret)
   }
 
-  const fetchArticles = async (secret: string) => {
+  const fetchArticles = async (token: string) => {
     try {
+      console.log('Fetching articles...')
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles`, {
         headers: {
-          'Authorization': `Bearer ${secret}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store'
       })
-      if (!res.ok) throw new Error('Failed to fetch articles')
+      
+      console.log('Articles response status:', res.status)
       const data = await res.json()
+      console.log('Articles response:', data)
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch articles')
+      }
+
       setArticles(data.articles)
       setError('')
     } catch (err) {
+      console.error('Error fetching articles:', err)
       setError('Failed to load articles')
-      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -89,38 +111,44 @@ export default function AdminPage() {
     if (!confirm('Are you sure you want to delete this article?')) return
 
     try {
-      const adminSecret = localStorage.getItem('adminSecret')
-      if (!adminSecret) {
+      const token = localStorage.getItem('adminSecret')
+      if (!token) {
+        console.error('No admin token found')
         alert('Please log in again')
         setIsAuthenticated(false)
         return
       }
 
+      console.log('Deleting article:', slug)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/articles/${slug}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${adminSecret}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         cache: 'no-store'
       })
 
+      console.log('Delete response status:', res.status)
+      const data = await res.json()
+      console.log('Delete response:', data)
+
       if (!res.ok) {
-        const data = await res.json()
+        if (res.status === 401) {
+          console.error('Delete failed: Unauthorized')
+          localStorage.removeItem('adminSecret')
+          setIsAuthenticated(false)
+          alert('Your session has expired. Please log in again.')
+          return
+        }
         throw new Error(data.error || 'Failed to delete article')
       }
       
-      // Remove the deleted article from the state
+      console.log('Article deleted successfully')
       setArticles(articles.filter(article => article.slug !== slug))
-      // Refresh the page to ensure we have the latest data
       router.refresh()
     } catch (err) {
       console.error('Error deleting article:', err)
-      if (err instanceof Error && err.message.includes('Invalid authorization token')) {
-        alert('Your session has expired. Please log in again.')
-        setIsAuthenticated(false)
-        return
-      }
       alert(err instanceof Error ? err.message : 'Failed to delete article')
     }
   }
